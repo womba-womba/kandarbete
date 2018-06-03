@@ -2,6 +2,7 @@
   "name": "sas-vacation-management-system",
   "version": "0.1.0",
   "private": true,
+  "main": "server/server.js",
   "dependencies": {
     "ag-grid": "^17.1.1",
     "ag-grid-react": "^17.1.0",
