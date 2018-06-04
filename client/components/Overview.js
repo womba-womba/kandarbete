@@ -17,7 +17,6 @@ export default class Overview extends React.Component {
             vacations: null,
             columns: null,
             loading: false,
-            quotas: []
 
         };
         this.optimize = this.optimize.bind(this);
@@ -31,6 +30,23 @@ export default class Overview extends React.Component {
             fixed: 'left',
             defaultSortOrder: 'descend',
             sorter: (a, b) => a.emp_no - b.emp_no,
+            // render: (value, row, index) => {
+            //     const obj = {
+            //       children: value,
+            //       props: {},
+            //     };
+            //     if (index === 2) {
+            //       obj.props.rowSpan = 2;
+            //     }
+            //     // These two are merged into above cell
+            //     if (index === 3) {
+            //       obj.props.rowSpan = 0;
+            //     }
+            //     if (index === 4) {
+            //       obj.props.colSpan = 0;
+            //     }
+            //     return obj;
+            //   },
         }
         const vacation_no = {
             title: 'Vac no',
@@ -96,33 +112,24 @@ export default class Overview extends React.Component {
                 onHeaderCell: (column) => ({
 
                 }),
-                children: {
+                children: [{
                     title: days[i].format("ddd"),
-                    dataIndex: days[i].format('YYYY-MM-DD-ddd'),
-                    key: days[i].format('YYYY-MM-DD-ddd'),
+                    dataIndex: days[i].format('YYYY-MM-DD'),
+                    key: days[i].format('YYYY-MM-DD'),
                     onHeaderCell: (column) => ({
                         className: "test",
                     }),
-                    children: {
-                        title: this.state.quotas[i] + "/5",
-                        dataIndex: days[i].format('YYYY-MM-DD'),
-                        key: days[i].format('YYYY-MM-DD'),
-                        onHeaderCell: (column) => ({
-                            className: "test",
-                        }),
-                        render: (text, record) => <span className=
-                            {(text === true && record.status == 0) ? "applied" :
-                                (text === true && record.status == 1) ? "accepted" :
-                                    (text === true && record.status == 2) ? "denied" :
-                                         null}>
-                            {record.key === "quotas" ? text + "/5" : null}</span>,
-                        // onCell: (record) =>  ({
-                        //     className: "test",
-                        //   }),
-    
-                    }
+                    render: (text, record) => <span className=
+                        {(text === true && record.status == 0) ? "applied" :
+                            (text === true && record.status == 1) ? "accepted" :
+                                (text === true && record.status == 2) ? "denied" :
+                                    text > 5 ? "booked" : null}>
+                        {record.key === "quotas" ? text + "/5" : null}</span>,
+                    // onCell: (record) =>  ({
+                    //     className: "test",
+                    //   }),
 
-                }
+                }]
 
             }
             for (var y = 0; y < monthsarray.length; y++) {
@@ -154,15 +161,13 @@ export default class Overview extends React.Component {
         this.setState({ columns });
     }
 
-    componentWillMount() {
-        this.getVacations();
+    componentDidMount() {
         this.createColumns();
-        
+        this.getVacations();
 
     }
     confirmApplication(record) {
         var dataSource = [...this.state.vacations];
-        var quotas = this.state.quotas;
         for (var i = 0; i < dataSource.length; i++) {
             if (dataSource[i].vacation_no == record.vacation_no &&
                 dataSource[i].emp_no == record.emp_no &&
@@ -180,20 +185,18 @@ export default class Overview extends React.Component {
                     dataSource[i].status = 1;
                     for (var key in dataSource[i]) {
                         if (dataSource[i][key] === true) {
-                            quotas[i]++;
+                            dataSource[0][key]++;
                         }
                     }
                 }
 
             }
         }
-        this.setState({ quotas });
         this.setState({ vacations: dataSource });
 
 
     }
     denyApplication(record) {
-        
         var dataSource = [...this.state.vacations];
         var applicationIndex = dataSource.findIndex(item => item.key === record.key);
         if (dataSource[applicationIndex].status == 0) {
@@ -212,9 +215,9 @@ export default class Overview extends React.Component {
                 var vacations = res.data;
                 var range2 = moment.range(moment(this.props.vacationperiod.start_date).format('YYYY-MM-DD'), moment(this.props.vacationperiod.end_date).format('YYYY-MM-DD'));
                 var days2 = Array.from(range2.by('days'));
-                var quotas = this.state.quotas;
+                var quotas = {};
                 for (var y = 0; y < days2.length; y++) {
-                    quotas[y] = 0;
+                    quotas[days2[y].format('YYYY-MM-DD')] = 0;
                 }
 
 
@@ -230,17 +233,27 @@ export default class Overview extends React.Component {
                         // quotas[days1[y].format('YYYY-MM-DD')]++;
                     }
                 }
+                vacations.unshift(
+                    {
+                        emp_no: "Quotas",
+                        key: "quotas",
 
-                this.setState({ quotas });
+                    }
+                )
+
+
+                for (var y = 0; y < days2.length; y++) {
+                    vacations[0][days2[y].format('YYYY-MM-DD')] = quotas[days2[y].format('YYYY-MM-DD')];
+                }
+
                 this.setState({ vacations });
                 this.setState({ loading: false });
             })
     }
     optimize() {
-        var quotas = this.state.quotas;
         var dataSource = [...this.state.vacations];
         var highestindex = 1;
-        for (var i = 0; i < dataSource.length; i++) {
+        for (var i = 1; i < dataSource.length; i++) {
             dataSource[i].length = 0;
             for (var key in dataSource[i]) {
                 if (dataSource[i][key] === true) {
@@ -251,7 +264,7 @@ export default class Overview extends React.Component {
         var unsorted = true;
         while (unsorted) {
             unsorted = false;
-            for (var i = 0; i < dataSource.length - 1; i++) {
+            for (var i = 1; i < dataSource.length - 1; i++) {
                 if (dataSource[i].length < dataSource[i + 1].length) {
                     var firstvalue = dataSource[i];
                     var secondvalue = dataSource[i + 1];
@@ -262,10 +275,10 @@ export default class Overview extends React.Component {
 
             }
         }
-        for (var i = 0; i < dataSource.length; i++) {
+        for (var i = 1; i < dataSource.length; i++) {
             var compatible = true;
             for (var key in dataSource[i]) {
-                if (( quotas[i] + 1) > 5 || dataSource[i].status === 2) {
+                if ((dataSource[0][key] + 1) > 5 || dataSource[i].status === 2) {
                     compatible = false;
                     break;
                 }
@@ -281,11 +294,11 @@ export default class Overview extends React.Component {
                     dataSource[i].status = 1;
                     for (var key in dataSource[i]) {
                         if (dataSource[i][key] === true) {
-                            quotas[i]++;
+                            dataSource[0][key]++;
                         }
                     }
                 }
-                for (var y = 0; y < dataSource.length; y++) {
+                for (var y = 1; y < dataSource.length; y++) {
                     if (dataSource[y].vacation_no == dataSource[i].vacation_no &&
                         dataSource[y].emp_no == dataSource[i].emp_no &&
                         dataSource[y].key != dataSource[i].key
@@ -297,7 +310,6 @@ export default class Overview extends React.Component {
                 }
             }
         }
-        this.setState({ quotas });
         this.setState({ vacations: dataSource });
     }
 
@@ -315,3 +327,53 @@ export default class Overview extends React.Component {
 
 }
 
+class EditableCell extends React.Component {
+    state = {
+        value: this.props.value,
+        editable: false,
+    }
+    handleChange = (e) => {
+        const value = e.target.value;
+        this.setState({ value });
+    }
+    check = () => {
+        this.setState({ editable: false });
+        if (this.props.onChange) {
+            this.props.onChange(this.state.value);
+        }
+    }
+    edit = () => {
+        this.setState({ editable: true });
+    }
+    render() {
+        const { value, editable } = this.state;
+        return (
+            <div className="editable-cell">
+                {
+                    editable ?
+                        <div className="editable-cell-input-wrapper">
+                            <Input
+                                value={value}
+                                onChange={this.handleChange}
+                                onPressEnter={this.check}
+                            />
+                            <Icon
+                                type="check"
+                                className="editable-cell-icon-check"
+                                onClick={this.check}
+                            />
+                        </div>
+                        :
+                        <div className="editable-cell-text-wrapper">
+                            {value || ' '}
+                            <Icon
+                                type="edit"
+                                className="editable-cell-icon"
+                                onClick={this.edit}
+                            />
+                        </div>
+                }
+            </div>
+        );
+    }
+}

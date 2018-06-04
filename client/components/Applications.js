@@ -114,17 +114,7 @@ export default class Applications extends React.Component {
             periodID = this.props.vacationperiod.key;
             this.setState({ periodID });
         }
-        else {
-            this.columns.unshift(
-                {
-                    title: 'Period',
-                    width: 130,
-                    dataIndex: 'name',
-                    key: 'name',
 
-                }
-            )
-        }
     }
     confirmApplication(record) {
         var dataSource = [...this.state.staffmemberswithvacation];
@@ -388,7 +378,7 @@ export default class Applications extends React.Component {
         );
     };
     render() {
-        const columns = [{
+        var columns = [{
             title: 'Emp no',
             width: 140,
             dataIndex: 'emp_no',
@@ -497,6 +487,17 @@ export default class Applications extends React.Component {
             //     ),
             // }
         ];
+        if (this.props.vacationperiod === undefined) {
+            columns.unshift(
+                {
+                    title: 'Period',
+                    width: 130,
+                    dataIndex: 'name',
+                    key: 'name',
+
+                }
+            )
+        }
         return (
             <Table scroll={{ y: 650 }} loading={this.state.loading} expandedRowRender={this.expandedRowRender} columns={columns} dataSource={this.state.staffmemberswithvacation} />
         );

@@ -82,23 +82,25 @@ export default class VacationWisher extends Component {
     getVacationPeriods() {
         axios.get(`/api/getvacationperiods`)
             .then(res => {
-                var vacationperiods = res.data;
+                const vacationperiods = res.data;
                 for (var i = 0; i < vacationperiods.length; i++) {
                     vacationperiods[i].status = 0;
                     vacationperiods[i].key = vacationperiods[i].id;
                 }
+                this.setState({ vacationperiods });
+                var vacationperiods = this.state.vacationperiods;
                 var vacations = this.state.vacations;
-                for (var i = 0; i < vacationperiods.length; i++) {
-                    axios.get(`/api/getapplications`, { params: { period: vacationperiods[i].id } })
+                for (var i = 0; i < this.state.vacationperiods.length; i++) {
+                    axios.get(`/api/getapplications`, { params: { period: this.state.vacationperiods[i].id } })
                         .then(res => {
-                            for (var i = 0; i < vacationperiods.length; i++) {
+                            for (var i = 0; i < this.state.vacationperiods.length; i++) {
                                 if (res.data.length != 0) {
-                                    if (vacationperiods[i].id == res.data[0].period) {
+                                    if (this.state.vacationperiods[i].id == res.data[0].period) {
                                         vacationperiods[i].status = 1;
                                     }
                                 }
                             }
-                            this.setState({ vacationperiods });
+                            this.setState({ vacationperiods: vacationperiods });
                             for (var i = 0; i < res.data.length; i++) {
                                 vacations[vacations.length] = res.data[i];
                             }
